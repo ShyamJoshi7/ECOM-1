@@ -16,7 +16,7 @@
   }
 
   .animate-slide-in {
-    animation: slide-in 0.6s ease-out;
+    animation: slide-in 0.9s ease-out;
   }
 }
 
@@ -31,7 +31,7 @@
     @apply font-normal text-black leading-relaxed antialiased;
   }
   .navbar {
-    @apply z-50 sticky flex items-center w-full h-[200px];
+    @apply z-50 top-0 sticky flex items-center w-full h-[200px];
   }
   img {
     @apply w-full h-full object-cover;

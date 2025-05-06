@@ -15,8 +15,11 @@ const TopBanner = () => {
     return () => clearInterval(timer);
   }, []);
   return (
-    <div className="bg-[#f5d6a3] text-green-800 font-semibold text-sm overflow-hidden h-[38px] flex items-center justify-center">
-      <div key={index} className="animate-slide-in whitespace-nowrap px-4">
+    <div className="bg-[#f5d6a3] text-green-800 font-semibold overflow-hidden h-[38px] flex items-center justify-center">
+      <div
+        key={index}
+        className="animate-slide-in whitespace-nowrap max-w-full text-center text-sm sm:text-base max-sm:whitespace-break-spaces"
+      >
         {msg[index]}
       </div>
     </div>
