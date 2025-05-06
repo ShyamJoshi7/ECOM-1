@@ -1,1 +1,50 @@
 @import "tailwindcss";
+
+@layer utilities {
+  @keyframes slide-in {
+    0% {
+      transform: translateX(100%);
+      opacity: 0;
+    }
+    20% {
+      opacity: 1;
+    }
+    100% {
+      transform: translateX(0%);
+      opacity: 1;
+    }
+  }
+
+  .animate-slide-in {
+    animation: slide-in 0.6s ease-out;
+  }
+}
+
+@layer components {
+  * {
+    @apply m-0 p-0 box-border text-base duration-150 scroll-smooth;
+  }
+  html {
+    @apply overflow-x-hidden bg-white;
+  }
+  body {
+    @apply font-normal text-black leading-relaxed antialiased;
+  }
+  .navbar {
+    @apply z-50 sticky flex items-center w-full h-[200px];
+  }
+  img {
+    @apply w-full h-full object-cover;
+  }
+}
+
+::-webkit-scrollbar {
+  width: 8px;
+}
+::-webkit-scrollbar-track {
+  background: #f1f1f1;
+}
+::-webkit-scrollbar-thumb {
+  background-color: #a78bfa;
+  border-radius: 20px;
+}
