@@ -1,12 +1,12 @@
-import Joi from "joi";
+const Joi = require("joi");
 
-export const createOrderValidation = Joi.object({
+const createOrderValidation = Joi.object({
   amount: Joi.number().positive().required(),
   currency: Joi.string().default("INR"),
   receipt: Joi.string().optional(),
 });
 
-export const verifyPaymentValidation = Joi.object({
+const verifyPaymentValidation = Joi.object({
   razorpay_order_id: Joi.string().required(),
   razorpay_payment_id: Joi.string().required(),
   razorpay_signature: Joi.string().required(),
@@ -14,3 +14,5 @@ export const verifyPaymentValidation = Joi.object({
   currency: Joi.string().optional(),
   receipt: Joi.string().optional(),
 });
+
+module.exports = { createOrderValidation, verifyPaymentValidation };

@@ -1,7 +1,6 @@
-import mongoose, { Schema, Document } from "mongoose";
-import { Payment as PaymentInterface } from "./payment.interface";
+const mongoose = require("mongoose");
 
-const PaymentSchema = new Schema(
+const PaymentSchema = new mongoose.Schema(
   {
     amount: {
       type: Number,
@@ -37,8 +36,4 @@ const PaymentSchema = new Schema(
   { timestamps: true }
 );
 
-interface PaymentDocument extends PaymentInterface, Document {}
-
-const PaymentModel = mongoose.model<PaymentDocument>("Payment", PaymentSchema);
-
-export default PaymentModel;
+module.exports = mongoose.model("Payment", PaymentSchema);

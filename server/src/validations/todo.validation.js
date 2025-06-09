@@ -1,7 +1,9 @@
-import Joi from "joi";
+const Joi = require("joi");
 
-export const todoValidation = Joi.object({
+const todoValidation = Joi.object({
   title: Joi.string().required(),
   description: Joi.string().required(),
   completed: Joi.boolean(),
 });
+
+module.exports = { todoValidation };

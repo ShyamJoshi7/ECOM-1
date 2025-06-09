@@ -1,5 +1,5 @@
-import mongoose, { Schema, Document } from "mongoose";
-import { User as UserInterface } from "./user.interface";
+const mongoose = require("mongoose");
+const { Schema } = mongoose;
 
 const UserSchema = new Schema({
   username: {
@@ -14,10 +14,6 @@ const UserSchema = new Schema({
   email: {
     type: String,
     required: true,
-  },
-  profilePictureUrl: {
-    type: String,
-    required: false,
   },
   role: {
     type: String,
@@ -36,8 +32,6 @@ const UserSchema = new Schema({
   },
 });
 
-interface UserDocument extends UserInterface, Document {}
+const UserModel = mongoose.model("User", UserSchema);
 
-const UserModel = mongoose.model<UserDocument>("User", UserSchema);
-
-export default UserModel;
+module.exports = UserModel;

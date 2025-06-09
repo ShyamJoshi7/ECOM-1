@@ -1,14 +1,12 @@
-import { Request, Response } from "express";
-import crypto from "crypto";
-import { createOrderValidation, verifyPaymentValidation } from "./payment.validation";
-import PaymentModel from "./payment.model";
-import { Payment } from "./payment.interface";
-import razorpayInstance from "../../../config/razorpay.config";
-import dotenv from "dotenv";
+const crypto = require("crypto");
+const {
+  createOrderValidation,
+  verifyPaymentValidation,
+} = require("../validations/payment.validation");
+const PaymentModel = require("../models/payment.model");
+const razorpayInstance = require("../config/razorpay.config");
 
-dotenv.config();
-
-export const createOrder = async (req: Request, res: Response) => {
+const createOrder = async (req, res) => {
   try {
     const validated = await createOrderValidation.validateAsync(req.body);
 
@@ -21,19 +19,19 @@ export const createOrder = async (req: Request, res: Response) => {
     const order = await razorpayInstance.orders.create(options);
 
     res.status(201).json(order);
-  } catch (error: any) {
+  } catch (error) {
     res.status(500).json({ message: error.message });
   }
 };
 
-export const verifyPayment = async (req: Request, res: Response) => {
+const verifyPayment = async (req, res) => {
   try {
     const validated = await verifyPaymentValidation.validateAsync(req.body);
-
-    const { razorpay_order_id, razorpay_payment_id, razorpay_signature } = validated;
+    const { razorpay_order_id, razorpay_payment_id, razorpay_signature } =
+      validated;
 
     const generated_signature = crypto
-      .createHmac("sha256", process.env.RAZORPAY_KEY_SECRET!)
+      .createHmac("sha256", process.env.RAZORPAY_KEY_SECRET)
       .update(`${razorpay_order_id}|${razorpay_payment_id}`)
       .digest("hex");
 
@@ -44,10 +42,10 @@ export const verifyPayment = async (req: Request, res: Response) => {
         return res.status(404).json({ error: "Order not found in Razorpay" });
       }
 
-      const paymentData: Payment = {
-        amount: (order.amount as number) / 100, // Convert back to main currency unit
+      const paymentData = {
+        amount: order.amount / 100, // Convert back to main currency unit
         currency: order.currency,
-        receipt: order.receipt as string,
+        receipt: order.receipt,
         status: "paid",
         paymentId: razorpay_payment_id,
         orderId: razorpay_order_id,
@@ -61,7 +59,12 @@ export const verifyPayment = async (req: Request, res: Response) => {
     } else {
       res.status(400).json({ status: "failure", message: "Invalid signature" });
     }
-  } catch (error: any) {
+  } catch (error) {
     res.status(500).json({ message: error.message });
   }
+};
+
+module.exports = {
+  createOrder,
+  verifyPayment,
 };
