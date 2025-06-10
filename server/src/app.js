@@ -12,12 +12,10 @@ const {
   notFoundMiddleware,
   internalServerErrorMiddleware,
 } = require("./middlewares/errors.middleware");
-const todoRoutes = require("./routes/todo.route");
 const userRoutes = require("./routes/user.route");
-const paymentRoutes = require("./routes/payment.route");
 
 const app = express();
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT || 3000;
 
 // Middleware stack
 app.use(helmet());
