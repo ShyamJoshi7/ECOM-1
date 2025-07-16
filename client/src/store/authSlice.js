@@ -1,4 +1,5 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
+import axios from "axios";
 
 const initialState = {
   isAuthenticated: false,
@@ -12,7 +13,7 @@ export const registerUser = createAsyncThunk(
   async (formData, thunkAPI) => {
     try {
       const response = await axios.post(
-        "http://localhost:5000/api/v1/auth/register",
+        "http://localhost:5000/auth/register",
         formData,
         {
           withCredentials: true,
@@ -20,9 +21,30 @@ export const registerUser = createAsyncThunk(
       );
       return response.data;
     } catch (err) {
-      return thunkAPI.rejectWithValue(
-        err.response?.data?.message || "Registration failed"
+      return thunkAPI.rejectWithValue({
+        success: false,
+        message:
+          err.response?.data?.message || err.message || "Registration failed",
+      });
+    }
+  }
+);
+
+export const loginUser = createAsyncThunk(
+  "/auth/login",
+  async (formData, thunkAPI) => {
+    try {
+      const response = await axios.post(
+        "http://localhost:5000/auth/login",
+        formData,
+        { withCredentials: true }
       );
+      return response.data;
+    } catch (err) {
+      return thunkAPI.rejectWithValue({
+        success: false,
+        message: err.response?.data?.message || err.message || "Login failed",
+      });
     }
   }
 );
@@ -37,7 +59,6 @@ const authSlice = createSlice({
     builder
       .addCase(registerUser.pending, (state) => {
         state.isLoading = true;
-        state.error = null;
       })
       .addCase(registerUser.fulfilled, (state, action) => {
         state.isLoading = false;
@@ -45,6 +66,21 @@ const authSlice = createSlice({
         state.isAuthenticated = false;
       })
       .addCase(registerUser.rejected, (state, action) => {
+        state.isLoading = false;
+        state.user = null;
+        state.isAuthenticated = false;
+      })
+      .addCase(loginUser.pending, (state) => {
+        state.isLoading = true;
+      })
+      .addCase(loginUser.fulfilled, (state, action) => {
+        console.log(action);
+
+        state.isLoading = false;
+        state.user = action.payload.success ? action.payload.user : null;
+        state.isAuthenticated = action.payload.success;
+      })
+      .addCase(loginUser.rejected, (state, action) => {
         state.isLoading = false;
         state.user = null;
         state.isAuthenticated = false;
