@@ -4,9 +4,10 @@ import { registerFormControls } from "@/config";
 import CommonForm from "@/components/common/forms";
 import { useDispatch } from "react-redux";
 import { registerUser } from "@/store/authSlice";
+import { toast } from "sonner";
 
 const initialState = {
-  userName: "",
+  username: "",
   email: "",
   password: "",
 };
@@ -16,20 +17,19 @@ const AuthRegister = () => {
   const navigate = useNavigate();
 
   function onSubmit(e) {
-    // e.preventDefault();
-    // dispatch(registerUser(formData)).then((data) => {
-    //   if (data?.payload?.success) {
-    //     toast({
-    //       title: data?.payload?.message,
-    //     });
-    //     navigate("/auth/login");
-    //   } else {
-    //     toast({
-    //       title: data?.payload?.message,
-    //       variant: "destructive",
-    //     });
-    //   }
-    // });
+    e.preventDefault();
+    dispatch(registerUser(formData)).then((result) => {
+      const payload = result?.payload;
+
+      if (result?.type?.includes("fulfilled") && payload?.success) {
+        toast.success(payload.message || "Registration successful");
+        navigate("/auth/login");
+      } else {
+        toast.error(
+          payload?.message || payload?.error || "Something went wrong"
+        );
+      }
+    });
   }
   console.log(formData);
   return (
