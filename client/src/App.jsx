@@ -1,4 +1,6 @@
 import React from "react";
+import { useEffect } from "react";
+import { useDispatch, useSelector } from "react-redux";
 import { Route, Routes } from "react-router-dom";
 import AuthLayout from "./components/auth/layout";
 import Authlogin from "./pages/auth/login";
@@ -10,7 +12,7 @@ import AdminOrders from "./pages/admin-view/orders";
 import AdminProducts from "./pages/admin-view/products";
 import UnauthPage from "./pages/unauthPage";
 import ShoppingLayout from "./components/shopping-view/layout";
-import Notfound from "./pages/notfound";
+import PageNotFound from "./pages/notfound";
 import Home from "./pages/shopping-view/Home";
 import Listing from "./pages/shopping-view/listing";
 import Account from "./pages/shopping-view/account";
@@ -18,8 +20,18 @@ import Checkout from "./pages/shopping-view/checkout";
 import CheckAuth from "./components/common/check-auth";
 
 const App = () => {
-  const isAuthenticated = false;
-  const user = null;
+  const { user, isAuthenticated, isLoading } = useSelector(
+    (state) => state.auth
+  );
+  // const dispatch = useDispatch();
+
+  // useEffect(() => {
+  //   dispatch(checkAuth());
+  // }, [dispatch]);
+
+  // if (isLoading) return <Skeleton className="w-[800] bg-black h-[600px]" />;
+
+  console.log(isLoading, user);
 
   return (
     <div className="flex flex-col overflow-hidden bg-white">
@@ -61,8 +73,8 @@ const App = () => {
           <Route path="checkout" element={<Checkout />} />
           <Route path="account" element={<Account />} />
         </Route>
-        <Route path="*" element={<Notfound />} />
-        <Route path="unauth-page" element={<unauthPage />} />
+        <Route path="*" element={<PageNotFound />} />
+        <Route path="unauth-page" element={<UnauthPage />} />
       </Routes>
     </div>
   );
