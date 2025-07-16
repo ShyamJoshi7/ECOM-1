@@ -14,7 +14,7 @@ const {
 require("dotenv").config();
 const { uploadFileToS3, deleteFileFromS3 } = require("../utils/aws-s3");
 
-// const secretKey = process.env.JWT_SECRET;
+const secretKey = process.env.JWT_SECRET;
 // const nodemailerServiceName = process.env.NODEMAILER_SERVICE_NAME;
 // const nodemailerAuthUser = process.env.NODEMAILER_AUTH_USER;
 // const nodemailerAuthPassword = process.env.NODEMAILER_AUTH_PASSWORD;
@@ -27,178 +27,211 @@ const registerUser = async (req, res) => {
     const existingUser = await UserModel.findOne({ email: userData.email });
 
     if (existingUser) {
-      return res
-        .status(400)
-        .json({ message: "User with this email already exists" });
+      return res.status(400).json({
+        success: false,
+        message: "User with this email already exists",
+      });
     }
 
     const hashedPassword = await bcrypt.hash(userData.password, 10);
     const newUser = new UserModel({ ...userData, password: hashedPassword });
 
     const savedUser = await newUser.save();
-    res.status(201).json(savedUser);
+    res.status(201).json({
+      success: true,
+      message: "User registered successfully",
+      user: savedUser,
+    });
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    return res.status(500).json({
+      success: false,
+      message: error.message || "Registration failed",
+    });
   }
 };
 
-// const loginUser = async (req, res) => {
+const loginUser = async (req, res) => {
+  try {
+    const validated = await loginUserValidation.validateAsync(req.body);
+    const userData = validated;
+
+    const userToLogin = await UserModel.findOne({ email: userData.email });
+    if (!userToLogin) {
+      return res
+        .status(401)
+        .json({ success: false, message: "User doesn't exist!" });
+    }
+
+    const passwordMatch = await bcrypt.compare(
+      userData.password,
+      userToLogin.password
+    );
+    if (!passwordMatch) {
+      return res
+        .status(401)
+        .json({ success: false, message: "Invalid credentials" });
+    }
+
+    const token = jwt.sign(
+      {
+        id: userToLogin._id,
+        username: userToLogin.username,
+        email: userToLogin.email,
+        role: userToLogin.role,
+      },
+      secretKey,
+      {
+        expiresIn: "1d",
+      }
+    );
+
+    res.cookie("token", token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "Lax",
+    });
+    res.status(200).json({
+      token,
+      user: userToLogin,
+      success: true,
+      message: "Logged in successfully",
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message || "Login failed",
+    });
+  }
+};
+
+const logoutUser = (req, res) => {
+  res.clearCookie("token").json({
+    success: true,
+    message: "Logged out successfully!",
+  });
+};
+
+// const sendResetPasswordOtp = async (req, res) => {
 //   try {
-//     const validated = await loginUserValidation.validateAsync(req.body);
-//     const userData = validated;
-
-//     const userToLogin = await UserModel.findOne({ email: userData.email });
-//     if (!userToLogin) {
-//       return res.status(401).json({ message: "User doesn't exist!" });
-//     }
-
-//     const passwordMatch = await bcrypt.compare(
-//       userData.password,
-//       userToLogin.password
+//     const validated = await sendResetPasswordOtpValidation.validateAsync(
+//       req.body
 //     );
-//     if (!passwordMatch) {
-//       return res.status(401).json({ message: "Invalid credentials" });
+
+//     const user = await UserModel.findOne({ email: validated.email });
+//     if (!user) {
+//       return res.status(404).json({ message: "User not found" });
 //     }
 
-//     const token = jwt.sign(
-//       {
-//         id: userToLogin._id,
-//         username: userToLogin.username,
-//         email: userToLogin.email,
-//         role: userToLogin.role,
+//     const otp = crypto.randomInt(100000, 999999).toString();
+//     const otpExpiry = new Date(Date.now() + 15 * 60 * 1000); // 15 minutes expiry
+
+//     user.resetPassword = { otp, otpExpiry };
+//     await user.save();
+
+//     const transporter = nodemailer.createTransport({
+//       service: nodemailerServiceName,
+//       auth: {
+//         user: nodemailerAuthUser,
+//         pass: nodemailerAuthPassword,
 //       },
-//       secretKey,
-//       {
-//         expiresIn: "30d",
-//       }
-//     );
+//     });
 
-//     res.status(200).json({ token, user: userToLogin });
+//     await transporter.sendMail({
+//       from: nodemailerAuthUser,
+//       to: validated.email,
+//       subject: "Your OTP for Password Reset",
+//       text: `Your OTP for password reset is ${otp}. It will expire in 15 minutes.`,
+//     });
+
+//     res.status(200).json({ message: "OTP sent to email" });
 //   } catch (error) {
 //     res.status(500).json({ error: error.message });
 //   }
 // };
 
-const sendResetPasswordOtp = async (req, res) => {
-  try {
-    const validated = await sendResetPasswordOtpValidation.validateAsync(
-      req.body
-    );
+// const resetPasswordWithOtp = async (req, res) => {
+//   try {
+//     const validated = await resetPasswordValidation.validateAsync(req.body);
 
-    const user = await UserModel.findOne({ email: validated.email });
-    if (!user) {
-      return res.status(404).json({ message: "User not found" });
-    }
+//     const user = await UserModel.findOne({ email: validated.email });
+//     if (!user) {
+//       return res.status(404).json({ message: "User not found" });
+//     }
 
-    const otp = crypto.randomInt(100000, 999999).toString();
-    const otpExpiry = new Date(Date.now() + 15 * 60 * 1000); // 15 minutes expiry
+//     if (
+//       !user.resetPassword ||
+//       user.resetPassword.otp !== validated.otp ||
+//       !user.resetPassword.otpExpiry ||
+//       user.resetPassword.otpExpiry < new Date()
+//     ) {
+//       return res.status(400).json({ message: "Invalid or expired OTP" });
+//     }
 
-    user.resetPassword = { otp, otpExpiry };
-    await user.save();
+//     user.password = await bcrypt.hash(validated.newPassword, 10);
+//     user.resetPassword = undefined;
+//     await user.save();
 
-    const transporter = nodemailer.createTransport({
-      service: nodemailerServiceName,
-      auth: {
-        user: nodemailerAuthUser,
-        pass: nodemailerAuthPassword,
-      },
-    });
+//     res.status(200).json({ message: "Password reset successful" });
+//   } catch (error) {
+//     res.status(500).json({ error: error.message });
+//   }
+// };
 
-    await transporter.sendMail({
-      from: nodemailerAuthUser,
-      to: validated.email,
-      subject: "Your OTP for Password Reset",
-      text: `Your OTP for password reset is ${otp}. It will expire in 15 minutes.`,
-    });
+// const updateProfile = async (req, res) => {
+//   try {
+//     const validated = await updateProfileValidation.validateAsync(req.body);
+//     const userId = req.user.id;
 
-    res.status(200).json({ message: "OTP sent to email" });
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-};
+//     const updatedUser = await UserModel.findByIdAndUpdate(
+//       userId,
+//       {
+//         ...(validated.username && { username: validated.username }),
+//         ...(validated.email && { email: validated.email }),
+//       },
+//       { new: true }
+//     );
 
-const resetPasswordWithOtp = async (req, res) => {
-  try {
-    const validated = await resetPasswordValidation.validateAsync(req.body);
+//     res
+//       .status(200)
+//       .json({ message: "Profile updated successfully", updatedUser });
+//   } catch (error) {
+//     res.status(500).json({ error: error.message });
+//   }
+// };
 
-    const user = await UserModel.findOne({ email: validated.email });
-    if (!user) {
-      return res.status(404).json({ message: "User not found" });
-    }
+// const updatePassword = async (req, res) => {
+//   try {
+//     const validated = await updatePasswordValidation.validateAsync(req.body);
+//     const userId = req.user.id;
+//     const user = await UserModel.findById(userId);
 
-    if (
-      !user.resetPassword ||
-      user.resetPassword.otp !== validated.otp ||
-      !user.resetPassword.otpExpiry ||
-      user.resetPassword.otpExpiry < new Date()
-    ) {
-      return res.status(400).json({ message: "Invalid or expired OTP" });
-    }
+//     if (!user) {
+//       return res.status(404).json({ message: "User not found" });
+//     }
 
-    user.password = await bcrypt.hash(validated.newPassword, 10);
-    user.resetPassword = undefined;
-    await user.save();
+//     const isOldPasswordValid = await bcrypt.compare(
+//       validated.oldPassword,
+//       user.password
+//     );
+//     if (!isOldPasswordValid) {
+//       return res.status(400).json({ message: "Old password is incorrect" });
+//     }
 
-    res.status(200).json({ message: "Password reset successful" });
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-};
+//     user.password = await bcrypt.hash(validated.newPassword, 10);
+//     await user.save();
 
-const updateProfile = async (req, res) => {
-  try {
-    const validated = await updateProfileValidation.validateAsync(req.body);
-    const userId = req.user.id;
-
-    const updatedUser = await UserModel.findByIdAndUpdate(
-      userId,
-      {
-        ...(validated.username && { username: validated.username }),
-        ...(validated.email && { email: validated.email }),
-      },
-      { new: true }
-    );
-
-    res
-      .status(200)
-      .json({ message: "Profile updated successfully", updatedUser });
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-};
-
-const updatePassword = async (req, res) => {
-  try {
-    const validated = await updatePasswordValidation.validateAsync(req.body);
-    const userId = req.user.id;
-    const user = await UserModel.findById(userId);
-
-    if (!user) {
-      return res.status(404).json({ message: "User not found" });
-    }
-
-    const isOldPasswordValid = await bcrypt.compare(
-      validated.oldPassword,
-      user.password
-    );
-    if (!isOldPasswordValid) {
-      return res.status(400).json({ message: "Old password is incorrect" });
-    }
-
-    user.password = await bcrypt.hash(validated.newPassword, 10);
-    await user.save();
-
-    res.status(200).json({ message: "Password updated successfully" });
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-};
+//     res.status(200).json({ message: "Password updated successfully" });
+//   } catch (error) {
+//     res.status(500).json({ error: error.message });
+//   }
+// };
 
 module.exports = {
   registerUser,
-  // loginUser,
-  sendResetPasswordOtp,
-  resetPasswordWithOtp,
-  updateProfile,
-  updatePassword,
+  loginUser,
+  logoutUser,
+  // sendResetPasswordOtp,
+  // resetPasswordWithOtp,
+  // updateProfile,
+  // updatePassword,
 };
