@@ -34,7 +34,7 @@ const CommonForm = ({
           <Input
             name={getControlItem.name}
             placeholder={getControlItem.placeholder}
-            id={getControlItem.id}
+            id={getControlItem.name}
             type={getControlItem.type}
             value={value}
             onChange={(event) =>
@@ -96,7 +96,7 @@ const CommonForm = ({
           <Input
             name={getControlItem.name}
             placeholder={getControlItem.placeholder}
-            id={getControlItem.id}
+            id={getControlItem.name}
             type={getControlItem.type}
             value={value}
             onChange={(event) =>
