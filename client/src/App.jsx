@@ -18,18 +18,20 @@ import Listing from "./pages/shopping-view/listing";
 import Account from "./pages/shopping-view/account";
 import Checkout from "./pages/shopping-view/checkout";
 import CheckAuth from "./components/common/check-auth";
+import { checkAuth } from "./store/authSlice";
+import { Skeleton } from "@/components/ui/skeleton";
 
 const App = () => {
   const { user, isAuthenticated, isLoading } = useSelector(
     (state) => state.auth
   );
-  // const dispatch = useDispatch();
+  const dispatch = useDispatch();
 
-  // useEffect(() => {
-  //   dispatch(checkAuth());
-  // }, [dispatch]);
+  useEffect(() => {
+    dispatch(checkAuth());
+  }, [dispatch]);
 
-  // if (isLoading) return <Skeleton className="w-[800] bg-black h-[600px]" />;
+  if (isLoading) return <Skeleton className="w-[800] bg-black h-[600px]" />;
 
   console.log(isLoading, user);
 
